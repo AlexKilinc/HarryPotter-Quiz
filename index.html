@@ -1207,7 +1207,16 @@ $("#startBtn").addEventListener('click',()=>{
       draw[slot]={q:false,i:POOL.length-1};
     }
   }
-  game={teams,queue,pos:0,draw,records:[],miniDone:false,pool:POOL};
+  // doodle : chaque participant joue une fois, à des moments répartis entre les questions
+  const entrants=[];const maxS=Math.max(...teams.map(x=>x.size));
+  for(let r=0;r<maxS;r++)teams.forEach((tm,ti)=>{if(r<tm.size)entrants.push({ti:ti,p:r+1,done:false});});
+  const miniSlots={};let prevSlot=0;
+  entrants.forEach((e,i)=>{
+    let s=Math.round((i+1)*queue.length/(entrants.length+1));
+    if(s<=prevSlot)s=prevSlot+1;
+    if(s<queue.length){miniSlots[s]=e;prevSlot=s;}
+  });
+  game={teams,queue,pos:0,draw,records:[],pool:POOL,miniSlots:miniSlots};
   goToTurn();
 });
 
@@ -1309,7 +1318,8 @@ function answer(orig,btn){
 $("#nextBtn").addEventListener('click',()=>{
   game.pos++;
   if(game.pos>=game.queue.length){finish();return;}
-  if(!game.miniDone&&game.pos===5){game.miniDone=true;startMiniGame(()=>goToTurn());return;}
+  const ent=game.miniSlots&&game.miniSlots[game.pos];
+  if(ent&&!ent.done){ent.done=true;startSingleMini(ent,()=>goToTurn());return;}
   goToTurn();
 });
 
@@ -1472,28 +1482,18 @@ function updateMiniTime(v){const e=document.getElementById('mg-time');if(e)e.tex
 function miniRepaintLabels(){const T=t();const team=(game&&game.queue[game.pos])?game.teams[game.queue[game.pos].team]:null;
   const mt=document.getElementById('mg-team');if(mt)mt.textContent=(team&&game.teams.length>1)?(T.turn+' '+team.name):T.miniTitle;
   const mh=document.getElementById('mg-hint');if(mh&&Mini.running)mh.textContent=T.miniHint;}
-function startMiniGame(done){
-  const T=t();
-  // tous les participants jouent une fois au doodle, équipe par équipe, joueur par joueur
-  const entrants=[];
-  game.teams.forEach((tm,ti)=>{for(let p=1;p<=tm.size;p++)entrants.push({ti:ti,p:p});});
-  let idx=0;
-  function runNext(){
-    if(idx>=entrants.length){done();return;}
-    const e=entrants[idx++],team=game.teams[e.ti];
-    const multi=game.teams.length>1||team.size>1;
-    const label=multi?(T.turn+' '+team.name+(team.size>1?(' — '+T.player+' '+e.p+'/'+team.size):'')):T.miniTitle;
-    const begin=()=>{
-      document.getElementById('mg-team').innerHTML=multi?(crestImg(team.house,20)+' '+escapeHtml(T.turn)+' <b>'+escapeHtml(team.name)+'</b>'+(team.size>1?(' — '+escapeHtml(T.player)+' '+e.p+'/'+team.size):'')):escapeHtml(label);
-      document.getElementById('mg-hint').textContent=T.miniHint;
-      updateMiniTime(30);document.getElementById('mg-score').textContent='0';
-      document.getElementById('mg-caught').textContent='0';document.getElementById('mg-lives').textContent='❤️❤️';
-      show('screen-minigame');
-      requestAnimationFrame(()=>requestAnimationFrame(()=>Mini.start(team,runNext)));
-    };
-    if(multi)showTurnFlash({player:e.p},team,begin);else begin();
-  }
-  runNext();
+function startSingleMini(e,done){
+  const T=t(),team=game.teams[e.ti];
+  const multi=game.teams.length>1||team.size>1;
+  const begin=()=>{
+    document.getElementById('mg-team').innerHTML=multi?(crestImg(team.house,20)+' '+escapeHtml(T.turn)+' <b>'+escapeHtml(team.name)+'</b>'+(team.size>1?(' — '+escapeHtml(T.player)+' '+e.p+'/'+team.size):'')):escapeHtml(T.miniTitle);
+    document.getElementById('mg-hint').textContent=T.miniHint;
+    updateMiniTime(30);document.getElementById('mg-score').textContent='0';
+    document.getElementById('mg-caught').textContent='0';document.getElementById('mg-lives').textContent='❤️❤️';
+    show('screen-minigame');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>Mini.start(team,done)));
+  };
+  if(multi)showTurnFlash({player:e.p},team,begin);else begin();
 }
 document.getElementById('mgLeft').addEventListener('click',()=>{if(Mini.running)Mini.move(-1);});
 document.getElementById('mgRight').addEventListener('click',()=>{if(Mini.running)Mini.move(1);});
