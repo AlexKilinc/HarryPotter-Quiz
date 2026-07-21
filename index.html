@@ -108,6 +108,7 @@ body.compact .brand .rule{display:none}
 .house-pick button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.35);border:1px solid rgba(90,70,40,.3);font-family:"Cinzel";font-size:10px;color:var(--ink-soft);transition:.13s}
 .house-pick button .cr{font-size:20px;line-height:1}
 .house-pick button.on{color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.hp-note{font-size:12px;color:var(--ink-soft);font-style:italic;margin-top:7px}
 .house-locked{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 14px;border-radius:9px;color:#fff;font-family:"Cinzel";font-size:13px}
 .house-locked .cr{font-size:19px}
 .house-locked .lk{opacity:.85;font-size:11px}
@@ -621,7 +622,7 @@ const UI = {
    user:"Ton nom de sorcier",userPh:"Ex. Merlin, Morgane…",toSort:"Passer au Choixpeau",nameNote:"Un questionnaire décidera ta maison.",
    sortTitle:"Le Choixpeau t'interroge",sortBtn:"Le Choixpeau décide",said:"« Le Choixpeau a décidé… »",
    revContinue:"Continuer",next:"Suivant",letsGo:"Régler le duel",userIs:"Bienvenue,",
-   numteams:"Nombre d'équipes",teams:"Équipes, maisons & joueurs",qpp:"Questions par joueur",start:"Commencer le duel",
+   numteams:"Nombre d'équipes",teams:"Équipes, maisons & joueurs",lockNote:"🔒 Maison attribuée par le Choixpeau — non modifiable",freeNote:"✏️ Cette équipe choisit librement son nom et sa maison",qpp:"Questions par joueur",start:"Commencer le duel",
    players:"joueurs",player:"Joueur",note:"15 s par question · enchaînement direct · surprises de Quidditch !",
    turn:"Au tour de",of:"sur",question:"Question",book:"Livre",film:"Film",both:"Livre & Film",family:"Famille",quid:"Quidditch",
    timeup:"Temps écoulé !",correct:"Bonne réponse !",wrong:"Mauvaise réponse",contBtn:"Continuer",
@@ -645,7 +646,7 @@ const UI = {
    user:"Je tovenaarsnaam",userPh:"Bijv. Merlijn, Morgana…",toSort:"Naar de Sorteerhoed",nameNote:"Een vragenlijst bepaalt je afdeling.",
    sortTitle:"De Sorteerhoed ondervraagt je",sortBtn:"De Sorteerhoed beslist",said:"« De Sorteerhoed heeft beslist… »",
    revContinue:"Doorgaan",next:"Volgende",letsGo:"Duel instellen",userIs:"Welkom,",
-   numteams:"Aantal teams",teams:"Teams, afdelingen & spelers",qpp:"Vragen per speler",start:"Start het duel",
+   numteams:"Aantal teams",teams:"Teams, afdelingen & spelers",lockNote:"🔒 Afdeling toegewezen door de Sorteerhoed — niet te wijzigen",freeNote:"✏️ Dit team kiest vrij zijn naam en afdeling",qpp:"Vragen per speler",start:"Start het duel",
    players:"spelers",player:"Speler",note:"15 s per vraag · direct verder · Zwerkbal-verrassingen!",
    turn:"Aan de beurt",of:"van",question:"Vraag",book:"Boek",film:"Film",both:"Boek & Film",family:"Familie",quid:"Zwerkbal",
    timeup:"Tijd om!",correct:"Goed antwoord!",wrong:"Fout antwoord",contBtn:"Doorgaan",
@@ -669,7 +670,7 @@ const UI = {
    user:"Your wizard name",userPh:"e.g. Merlin, Morgana…",toSort:"On to the Sorting Hat",nameNote:"A quiz will decide your house.",
    sortTitle:"The Sorting Hat questions you",sortBtn:"Let the Hat decide",said:"« The Sorting Hat has decided… »",
    revContinue:"Continue",next:"Next",letsGo:"Set up the duel",userIs:"Welcome,",
-   numteams:"Number of teams",teams:"Teams, houses & players",qpp:"Questions per player",start:"Start the duel",
+   numteams:"Number of teams",teams:"Teams, houses & players",lockNote:"🔒 House assigned by the Sorting Hat — cannot be changed",freeNote:"✏️ This team freely picks its name and house",qpp:"Questions per player",start:"Start the duel",
    players:"players",player:"Player",note:"15 s per question · straight through · Quidditch surprises!",
    turn:"Now playing",of:"of",question:"Question",book:"Book",film:"Film",both:"Book & Film",family:"Family",quid:"Quidditch",
    timeup:"Time's up!",correct:"Correct!",wrong:"Wrong answer",contBtn:"Continue",
@@ -1141,7 +1142,8 @@ function renderTeamRows(){
         <div class="stepper"><span class="cap">${T.players}</span>
           <button data-i="${i}" data-d="-1">−</button><span class="val" id="sz-${i}">${tm.size}</span><button data-i="${i}" data-d="1">+</button>
         </div></div>
-      <div class="house-pick" data-i="${i}"></div>`;
+      <div class="house-pick" data-i="${i}"></div>
+      <div class="hp-note">${i===0?T.lockNote:T.freeNote}</div>`;
     box.appendChild(row);
     const hp=row.querySelector('.house-pick');
     if(i===0){ // maison verrouillée (celle du joueur)
@@ -1407,7 +1409,7 @@ const Mini={canvas:null,ctx:null,W:0,H:0,lanes:5,lane:2,snitches:[],raf:null,las
    this.draw();updateMiniTime(Math.max(0,Math.ceil(this.duration-this.elapsed)));
    if(this.elapsed>=this.duration){this.finish();return;}
    this.raf=requestAnimationFrame(this.loop.bind(this));},
- spawn(){const type=Math.random()<0.35?'b':'s';this.snitches.push({lane:Math.floor(Math.random()*this.lanes),y:-14,spd:(type==='b'?0.85:0.9)+Math.random()*0.35,wing:Math.random()*6,done:false,type:type});},
+ spawn(){const type=Math.random()<0.33?'b':'s';this.snitches.push({lane:Math.floor(Math.random()*this.lanes),y:-14,spd:(type==='b'?0.85:0.9)+Math.random()*0.35,wing:Math.random()*6,done:false,type:type});},
  move(d){this.lane=Math.max(0,Math.min(this.lanes-1,this.lane+d));},
  setLane(l){if(l>=0&&l<this.lanes)this.lane=l;},
  draw(){const c=this.ctx,W=this.W,H=this.H,lw=W/this.lanes;
@@ -1470,12 +1472,29 @@ function updateMiniTime(v){const e=document.getElementById('mg-time');if(e)e.tex
 function miniRepaintLabels(){const T=t();const team=(game&&game.queue[game.pos])?game.teams[game.queue[game.pos].team]:null;
   const mt=document.getElementById('mg-team');if(mt)mt.textContent=(team&&game.teams.length>1)?(T.turn+' '+team.name):T.miniTitle;
   const mh=document.getElementById('mg-hint');if(mh&&Mini.running)mh.textContent=T.miniHint;}
-function startMiniGame(done){const T=t();const turn=game.queue[game.pos];const team=game.teams[turn.team];
-  document.getElementById('mg-team').textContent=(game.teams.length>1)?(T.turn+' '+team.name):T.miniTitle;
-  document.getElementById('mg-hint').textContent=T.miniHint;
-  updateMiniTime(30);document.getElementById('mg-score').textContent='0';document.getElementById('mg-caught').textContent='0';
-  show('screen-minigame');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>Mini.start(team,done)));}
+function startMiniGame(done){
+  const T=t();
+  // tous les participants jouent une fois au doodle, équipe par équipe, joueur par joueur
+  const entrants=[];
+  game.teams.forEach((tm,ti)=>{for(let p=1;p<=tm.size;p++)entrants.push({ti:ti,p:p});});
+  let idx=0;
+  function runNext(){
+    if(idx>=entrants.length){done();return;}
+    const e=entrants[idx++],team=game.teams[e.ti];
+    const multi=game.teams.length>1||team.size>1;
+    const label=multi?(T.turn+' '+team.name+(team.size>1?(' — '+T.player+' '+e.p+'/'+team.size):'')):T.miniTitle;
+    const begin=()=>{
+      document.getElementById('mg-team').innerHTML=multi?(crestImg(team.house,20)+' '+escapeHtml(T.turn)+' <b>'+escapeHtml(team.name)+'</b>'+(team.size>1?(' — '+escapeHtml(T.player)+' '+e.p+'/'+team.size):'')):escapeHtml(label);
+      document.getElementById('mg-hint').textContent=T.miniHint;
+      updateMiniTime(30);document.getElementById('mg-score').textContent='0';
+      document.getElementById('mg-caught').textContent='0';document.getElementById('mg-lives').textContent='❤️❤️';
+      show('screen-minigame');
+      requestAnimationFrame(()=>requestAnimationFrame(()=>Mini.start(team,runNext)));
+    };
+    if(multi)showTurnFlash({player:e.p},team,begin);else begin();
+  }
+  runNext();
+}
 document.getElementById('mgLeft').addEventListener('click',()=>{if(Mini.running)Mini.move(-1);});
 document.getElementById('mgRight').addEventListener('click',()=>{if(Mini.running)Mini.move(1);});
 document.getElementById('mgSkip').addEventListener('click',()=>{if(!Mini.finished)Mini.finish();});
