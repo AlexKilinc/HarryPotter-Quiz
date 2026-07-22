@@ -360,6 +360,8 @@ body.compact .brand .rule{display:none}
 .aq-tag.livre{background:rgba(53,107,77,.16);color:#1f5238}
 .aq-tag.film{background:rgba(124,31,44,.14);color:#7c1f2c}
 .aq-tag.both{background:rgba(122,80,20,.16);color:#6a4a12}
+.aq-tag.famille{background:rgba(151,58,140,.14);color:#7a2f72}
+.fam-head{font-family:"Cinzel";font-size:14px;letter-spacing:.08em;color:#7a2f72;text-align:center;margin:20px 0 6px;padding-top:14px;border-top:2px solid rgba(151,58,140,.3)}
 .aq-diff{font-size:11px;color:var(--ink-soft);font-family:"Cinzel"}
 .aq-badge{font-family:"Cinzel";font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:rgba(201,165,78,.28);color:#7a5c12}
 .aq-badge.ov{background:rgba(58,91,160,.2);color:#2f4a86}
@@ -566,7 +568,7 @@ body.compact .brand .rule{display:none}
         <div id="xlsx-msg"></div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:12px;text-align:left;line-height:1.5">
           <b>Format du tableur :</b> 1ʳᵉ ligne = en-têtes, puis <i>une question par ligne</i>.<br>
-          Colonnes : <b>Categorie</b> (Livre / Film / Les deux) · <b>Difficulte</b> (1 à 3) · <b>Question</b> · <b>Bonne_reponse</b> · <b>Mauvaise_1</b> · <b>Mauvaise_2</b> · <b>Mauvaise_3</b>.
+          Colonnes : <b>Categorie</b> (Livre / Film / Les deux / Famille) · <b>Difficulte</b> (1 à 3) · <b>Question</b> · <b>Bonne_reponse</b> · <b>Mauvaise_1</b> · <b>Mauvaise_2</b> · <b>Mauvaise_3</b>.
         </div>
       </div>
 
@@ -595,7 +597,7 @@ body.compact .brand .rule{display:none}
     <div class="modal-card">
       <h3 id="ed-title">Éditer la question</h3>
       <label>Catégorie</label>
-      <select id="ed-cat"><option value="livre">Livre</option><option value="film">Film</option><option value="both">Livre &amp; Film</option></select>
+      <select id="ed-cat"><option value="livre">Livre</option><option value="film">Film</option><option value="both">Livre &amp; Film</option><option value="famille">Famille 💜</option></select>
       <label>Difficulté</label>
       <select id="ed-diff"><option value="1">1 — Facile</option><option value="2">2 — Moyen</option><option value="3">3 — Difficile</option></select>
       <label>Question</label>
@@ -1199,11 +1201,12 @@ $("#startBtn").addEventListener('click',()=>{
     else{draw.push({q:false,i:drawOne()});}
   });
   // question famille : une seule par partie, glissée à une position aléatoire
-  if(typeof FAMILY!=='undefined'&&FAMILY.length){
+  const FAMS=(typeof activeFamily==='function')?activeFamily():FAMILY;
+  if(FAMS&&FAMS.length){
     const slots=draw.map((d,i)=>d.q?-1:i).filter(i=>i>=0);
     if(slots.length){
       const slot=slots[Math.floor(Math.random()*slots.length)];
-      POOL.push(FAMILY[Math.floor(Math.random()*FAMILY.length)]);
+      POOL.push(FAMS[Math.floor(Math.random()*FAMS.length)]);
       draw[slot]={q:false,i:POOL.length-1};
     }
   }
@@ -1571,12 +1574,18 @@ try{const _o=Store.get('qs.overrides');if(_o)qOverrides=JSON.parse(_o)||{};}catc
 function saveCustom(){try{Store.set('qs.customQ',JSON.stringify(customQuestions));}catch(e){}}
 function saveOverrides(){try{Store.set('qs.overrides',JSON.stringify(qOverrides));}catch(e){}}
 function activeQuestions(){return QUESTIONS.map((q,i)=>qOverrides[i]||q).concat(customQuestions);}
+let customFamily=[],famOverrides={};
+try{const _cf=Store.get('qs.customFam');if(_cf)customFamily=JSON.parse(_cf)||[];}catch(e){}
+try{const _of=Store.get('qs.famOverrides');if(_of)famOverrides=JSON.parse(_of)||{};}catch(e){}
+function saveCustomFam(){try{Store.set('qs.customFam',JSON.stringify(customFamily));}catch(e){}}
+function saveFamOverrides(){try{Store.set('qs.famOverrides',JSON.stringify(famOverrides));}catch(e){}}
+function activeFamily(){return FAMILY.map((q,i)=>famOverrides[i]||q).concat(customFamily);}
 function isCamille(){const n=((profile&&profile.user)||cfg.user||'').trim().toLowerCase();return n==='camille';}
 function updateAdminButton(){const b=document.getElementById('adminBtn');if(b)b.style.display=isCamille()?'':'none';}
 function escapeHtml(s){return (''+s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function _norm(s){return (s==null?'':(''+s)).trim();}
 function _keyNorm(s){return (''+s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');}
-function _catFrom(v){const s=(''+v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();if(s.indexOf('livre')>=0&&s.indexOf('film')>=0)return 'both';if(s.indexOf('film')>=0||s.indexOf('movie')>=0)return 'film';if(s.indexOf('livre')>=0||s.indexOf('book')>=0)return 'livre';return 'both';}
+function _catFrom(v){const s=(''+v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();if(s.indexOf('famil')>=0)return 'famille';if(s.indexOf('livre')>=0&&s.indexOf('film')>=0)return 'both';if(s.indexOf('film')>=0||s.indexOf('movie')>=0)return 'film';if(s.indexOf('livre')>=0||s.indexOf('book')>=0)return 'livre';return 'both';}
 
 /* --- porte d'accès (code = nom du sorcier) --- */
 function openAdminGate(){const ov=document.getElementById('adminGate');if(!ov)return;document.getElementById('adminCode').value='';document.getElementById('adminErr').textContent='';ov.style.display='flex';setTimeout(function(){document.getElementById('adminCode').focus();},60);}
@@ -1587,11 +1596,12 @@ function submitAdminGate(){const code=(document.getElementById('adminCode').valu
 function renderAdmin(){
   const L=cfg.lang,listEl=document.getElementById('admin-list');if(!listEl)return;listEl.innerHTML='';
   const all=activeQuestions(),nBuilt=QUESTIONS.length;
+  const catName=function(c){return c==='livre'?'Livre':(c==='film'?'Film':(c==='famille'?'Famille':'Livre & Film'));};
   all.forEach(function(q,idx){
     const custom=idx>=nBuilt,overridden=(!custom)&&!!qOverrides[idx];
-    const lq=q[L]||q.fr,catLbl=q.cat==='livre'?'Livre':(q.cat==='film'?'Film':'Livre & Film');
+    const lq=q[L]||q.fr;
     const row=document.createElement('div');row.className='aq';
-    row.innerHTML='<div class="aq-top"><span class="aq-tag '+(q.cat==='both'?'both':q.cat)+'">'+catLbl+'</span>'+
+    row.innerHTML='<div class="aq-top"><span class="aq-tag '+(q.cat==='both'?'both':q.cat)+'">'+catName(q.cat)+'</span>'+
       '<span class="aq-diff">Diff. '+q.diff+'</span>'+(custom?'<span class="aq-badge">ajoutée</span>':(overridden?'<span class="aq-badge ov">modifiée</span>':''))+'</div>'+
       '<div class="aq-q">'+(idx+1)+'. '+escapeHtml(lq.q)+'</div>'+
       '<div class="aq-a">✓ '+escapeHtml(lq.o[q.a])+'</div>'+
@@ -1599,20 +1609,41 @@ function renderAdmin(){
       (custom?'<button class="del" data-del="'+idx+'">Supprimer</button>':(overridden?'<button class="del" data-reset="'+idx+'">Réinitialiser</button>':''))+'</div>';
     listEl.appendChild(row);
   });
-  listEl.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){openEditor(+b.dataset.edit);});});
+  /* section questions famille */
+  const famAll=activeFamily(),nFam=FAMILY.length;
+  const fh=document.createElement('div');fh.className='fam-head';fh.textContent='💜 Questions Famille ('+famAll.length+')';listEl.appendChild(fh);
+  famAll.forEach(function(q,idx){
+    const custom=idx>=nFam,overridden=(!custom)&&!!famOverrides[idx];
+    const lq=q[L]||q.fr;
+    const row=document.createElement('div');row.className='aq';
+    row.innerHTML='<div class="aq-top"><span class="aq-tag famille">Famille</span>'+
+      (custom?'<span class="aq-badge">ajoutée</span>':(overridden?'<span class="aq-badge ov">modifiée</span>':''))+'</div>'+
+      '<div class="aq-q">F'+(idx+1)+'. '+escapeHtml(lq.q)+'</div>'+
+      '<div class="aq-a">✓ '+escapeHtml(lq.o[q.a])+'</div>'+
+      '<div class="aq-act"><button data-fedit="'+idx+'">Éditer</button>'+
+      (custom?'<button class="del" data-fdel="'+idx+'">Supprimer</button>':(overridden?'<button class="del" data-freset="'+idx+'">Réinitialiser</button>':''))+'</div>';
+    listEl.appendChild(row);
+  });
+  listEl.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){openEditor(+b.dataset.edit,'main');});});
   listEl.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deleteCustom(+b.dataset.del);});});
   listEl.querySelectorAll('[data-reset]').forEach(function(b){b.addEventListener('click',function(){resetOverride(+b.dataset.reset);});});
-  const cnt=document.getElementById('admin-count');if(cnt)cnt.textContent=all.length+' questions ('+nBuilt+" d'origine + "+customQuestions.length+' ajoutées) · langue éditée : '+L.toUpperCase();
+  listEl.querySelectorAll('[data-fedit]').forEach(function(b){b.addEventListener('click',function(){openEditor(+b.dataset.fedit,'fam');});});
+  listEl.querySelectorAll('[data-fdel]').forEach(function(b){b.addEventListener('click',function(){deleteCustomFam(+b.dataset.fdel);});});
+  listEl.querySelectorAll('[data-freset]').forEach(function(b){b.addEventListener('click',function(){resetFamOverride(+b.dataset.freset);});});
+  const cnt=document.getElementById('admin-count');if(cnt)cnt.textContent=all.length+' questions ('+nBuilt+" d'origine + "+customQuestions.length+' ajoutées) + '+famAll.length+' famille · langue éditée : '+L.toUpperCase();
 }
+function deleteCustomFam(idx){const nFam=FAMILY.length;if(idx<nFam)return;customFamily.splice(idx-nFam,1);saveCustomFam();renderAdmin();}
+function resetFamOverride(idx){delete famOverrides[idx];saveFamOverrides();renderAdmin();}
 function deleteCustom(idx){const nBuilt=QUESTIONS.length;if(idx<nBuilt)return;customQuestions.splice(idx-nBuilt,1);saveCustom();renderAdmin();}
 function resetOverride(idx){delete qOverrides[idx];saveOverrides();renderAdmin();}
 
 /* --- éditeur (ajout / modification) --- */
-let editIdx=null;
-function openEditor(idx){
-  editIdx=(idx===undefined?null:idx);const isNew=(editIdx===null);const L=cfg.lang;
-  const q=isNew?null:activeQuestions()[editIdx];
-  document.getElementById('ed-title').textContent=isNew?'Ajouter une question':('Éditer la question · '+L.toUpperCase());
+let editIdx=null,editScope='main';
+function openEditor(idx,scope){
+  editIdx=(idx===undefined||idx===null)?null:idx;editScope=scope||'main';
+  const isNew=(editIdx===null);const L=cfg.lang;
+  const q=isNew?null:(editScope==='fam'?activeFamily()[editIdx]:activeQuestions()[editIdx]);
+  document.getElementById('ed-title').textContent=isNew?'Ajouter une question':((editScope==='fam'?'Éditer la question famille':'Éditer la question')+' · '+L.toUpperCase());
   document.getElementById('ed-cat').value=q?q.cat:'livre';
   document.getElementById('ed-diff').value=q?String(q.diff):'1';
   const lq=q?(q[L]||q.fr):null;
@@ -1631,7 +1662,14 @@ function saveEditor(){
   const q=_norm(document.getElementById('ed-q').value),a0=_norm(document.getElementById('ed-a0').value),a1=_norm(document.getElementById('ed-a1').value),a2=_norm(document.getElementById('ed-a2').value),a3=_norm(document.getElementById('ed-a3').value);
   if(!q||!a0||!a1||!a2||!a3){document.getElementById('ed-err').textContent='Remplis la question et les 4 réponses.';return;}
   const L=cfg.lang,lang={q:q,o:[a0,a1,a2,a3]};
-  if(editIdx===null){customQuestions.push({cat:cat,diff:diff,a:0,fr:{q:q,o:[a0,a1,a2,a3]},nl:{q:q,o:[a0,a1,a2,a3]},en:{q:q,o:[a0,a1,a2,a3]},custom:true});saveCustom();}
+  if(editIdx===null){
+    const nq={cat:cat,diff:diff,a:0,fr:{q:q,o:[a0,a1,a2,a3]},nl:{q:q,o:[a0,a1,a2,a3]},en:{q:q,o:[a0,a1,a2,a3]},custom:true};
+    if(cat==='famille'){customFamily.push(nq);saveCustomFam();}
+    else{customQuestions.push(nq);saveCustom();}
+  }
+  else if(editScope==='fam'){const nFam=FAMILY.length;
+    if(editIdx>=nFam){const cq=customFamily[editIdx-nFam];cq.cat='famille';cq.diff=diff;cq.a=0;cq[L]=lang;saveCustomFam();}
+    else{const base=JSON.parse(JSON.stringify(famOverrides[editIdx]||FAMILY[editIdx]));base.cat='famille';base.diff=diff;base.a=0;base[L]=lang;famOverrides[editIdx]=base;saveFamOverrides();}}
   else{const nBuilt=QUESTIONS.length;
     if(editIdx>=nBuilt){const cq=customQuestions[editIdx-nBuilt];cq.cat=cat;cq.diff=diff;cq.a=0;cq[L]=lang;saveCustom();}
     else{const base=JSON.parse(JSON.stringify(qOverrides[editIdx]||QUESTIONS[editIdx]));base.cat=cat;base.diff=diff;base.a=0;base[L]=lang;qOverrides[editIdx]=base;saveOverrides();}}
@@ -1658,7 +1696,11 @@ function _rowsToQuestions(rows){
   }
   return out;
 }
-function _importRows(rows){const msg=document.getElementById('xlsx-msg');const qs=_rowsToQuestions(rows);if(!qs.length){msg.textContent='Aucune question valide trouvée. Vérifie les colonnes (voir le format ci-dessous).';return;}customQuestions=customQuestions.concat(qs);saveCustom();renderAdmin();msg.innerHTML='🪄 <b>'+qs.length+'</b> question(s) importée(s) avec succès !';}
+function _importRows(rows){const msg=document.getElementById('xlsx-msg');const qs=_rowsToQuestions(rows);if(!qs.length){msg.textContent='Aucune question valide trouvée. Vérifie les colonnes (voir le format ci-dessous).';return;}
+  const fam=qs.filter(function(x){return x.cat==='famille';}),std=qs.filter(function(x){return x.cat!=='famille';});
+  if(std.length){customQuestions=customQuestions.concat(std);saveCustom();}
+  if(fam.length){customFamily=customFamily.concat(fam);saveCustomFam();}
+  renderAdmin();msg.innerHTML='🪄 <b>'+qs.length+'</b> question(s) importée(s) avec succès !'+(fam.length?(' (dont '+fam.length+' famille 💜)'):'');}
 function handleImport(file){const msg=document.getElementById('xlsx-msg');msg.textContent='Lecture en cours…';const name=(file.name||'').toLowerCase();
   if(name.slice(-4)==='.csv'){const rd=new FileReader();rd.onload=function(){try{_importRows(_parseCSV(rd.result));}catch(e){msg.textContent='Erreur de lecture du CSV.';}};rd.readAsText(file);return;}
   loadXLSX(function(err){if(err||!window.XLSX){msg.textContent='Impossible de charger le lecteur Excel (hors ligne ?). Exporte ton tableur en .csv puis réessaie.';return;}
